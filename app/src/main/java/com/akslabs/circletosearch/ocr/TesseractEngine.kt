@@ -101,7 +101,11 @@ object TesseractEngine {
     suspend fun extractText(context: Context, bitmap: Bitmap): List<TextNode> = coroutineScope {
         val dataPath = withContext(Dispatchers.IO) { prepareTessData(context) }
         val prefs = context.getSharedPreferences("OcrSettings", Context.MODE_PRIVATE)
-        val lang = prefs.getString("selected_lang", "eng") ?: "eng"
+        
+        // Get selected languages (comma-separated string stored as "selected_langs")
+        val selectedLangsStr = prefs.getString("selected_langs", "eng") ?: "eng"
+        val langs = selectedLangsStr.split(",").filter { it.isNotBlank() }.map { it.trim() }
+        val lang = langs.joinToString("+")  // Combine with "+" for Tesseract
 
         val w = bitmap.width
         val h = bitmap.height
