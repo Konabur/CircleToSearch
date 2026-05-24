@@ -41,7 +41,11 @@ fun OcrSettingsScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("OcrSettings", Context.MODE_PRIVATE)
 
-    var currentLang by remember { mutableStateOf(prefs.getString("selected_lang", "eng") ?: "eng") }
+    // Get selected languages as a comma-separated string, default to "eng"
+    val savedLangs = prefs.getString("selected_langs", "eng") ?: "eng"
+    val selectedLangsList = savedLangs.split(",").filter { it.isNotBlank() }.map { it.trim() }.toMutableSet()
+    
+    var selectedLanguages by remember { mutableStateOf(selectedLangsList) }
     var availableModels by remember { mutableStateOf(TesseractEngine.getAvailableModels(context)) }
     var isNoteVisible by remember { mutableStateOf(prefs.getBoolean("ocr_note_dismissed", false).not()) }
     val uriHandler = LocalUriHandler.current
@@ -59,6 +63,12 @@ fun OcrSettingsScreen(onBack: () -> Unit) {
                 }
             }
         }
+    }
+
+    // Save selected languages whenever they change
+    LaunchedEffect(selectedLanguages) {
+        val langsStr = selectedLanguages.sorted().joinToString(",")
+        prefs.edit().putString("selected_langs", langsStr).apply()
     }
 
     Scaffold(
@@ -102,7 +112,9 @@ fun OcrSettingsScreen(onBack: () -> Unit) {
                         shape = RoundedCornerShape(24.dp)
                     ) {
                         Box(modifier = Modifier.padding(16.dp)) {
-                            Column(modifier = Modifier.fillMaxWidth().padding(end = 32.dp)) {
+                            Column(modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(end = 32.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
                                         imageVector = Icons.Default.Info,
@@ -122,7 +134,7 @@ fun OcrSettingsScreen(onBack: () -> Unit) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 
                                 val annotatedString = buildAnnotatedString {
-                                    append("This app uses language models to detect text. By default, it uses a fast English model which may miss some text. To use high-accuracy models or detect other languages, download them from the ")
+                                    append("This app uses language models to detect text. By default, it uses a fast English model which may miss some text. To use high-accuracy models or detect other languages, request them from the ")
                                     
                                     pushStringAnnotation(tag = "URL", annotation = "https://t.me/AKSLabs")
                                     withStyle(style = SpanStyle(
@@ -134,7 +146,7 @@ fun OcrSettingsScreen(onBack: () -> Unit) {
                                     }
                                     pop()
                                     
-                                    append(" with /model command, e.g. /model english and import them below.")
+                                    append(" with /model command, e.g. /model english and import them below. You can select multiple languages at once!")
                                 }
 
                                 ClickableText(
@@ -173,7 +185,7 @@ fun OcrSettingsScreen(onBack: () -> Unit) {
 
             item {
                 Text(
-                    text = "Installed Models",
+                    text = "Installed Models (Select Multiple)",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -181,7 +193,7 @@ fun OcrSettingsScreen(onBack: () -> Unit) {
             }
 
             items(availableModels) { lang ->
-                val isSelected = lang == currentLang
+                val isSelected = lang in selectedLanguages
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -198,29 +210,69 @@ fun OcrSettingsScreen(onBack: () -> Unit) {
                         headlineContent = { Text(lang.uppercase(), fontWeight = FontWeight.Bold) },
                         supportingContent = { Text("$lang.traineddata", style = MaterialTheme.typography.labelSmall) },
                         leadingContent = {
+                            Checkbox(
+                                checked = isSelected,
+                                onCheckedChange = null,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        },
+                        trailingContent = {
                             Icon(
                                 Icons.Default.Translate, 
                                 contentDescription = null,
                                 tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         },
-                        trailingContent = {
-                            if (isSelected) {
-                                Icon(
-                                    Icons.Default.CheckCircle, 
-                                    contentDescription = "Selected", 
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-                        },
                         modifier = Modifier.clickable {
-                            currentLang = lang
-                            prefs.edit().putString("selected_lang", lang).apply()
+                            if (isSelected) {
+                                // Don't allow deselecting all languages
+                                if (selectedLanguages.size > 1) {
+                                    selectedLanguages = selectedLanguages.minus(lang).toMutableSet()
+                                }
+                            } else {
+                                selectedLanguages = selectedLanguages.plus(lang).toMutableSet()
+                            }
                         },
                         colors = ListItemDefaults.colors(
                             containerColor = Color.Transparent
                         )
                     )
+                }
+            }
+
+            // Show selected languages summary
+            if (selectedLanguages.isNotEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Selected Languages",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.tertiary
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = selectedLanguages.sorted().joinToString(" + ") { it.uppercase() },
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "OCR will use all selected languages combined for better accuracy",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
         }
