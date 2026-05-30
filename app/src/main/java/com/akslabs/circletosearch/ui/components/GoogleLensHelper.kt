@@ -12,7 +12,7 @@ import android.widget.Toast
 import androidx.core.content.FileProvider
 import java.io.File
 
-
+import com.akslabs.circletosearch.BuildConfig
 
 /**
  * Helper class for Google Lens integration
@@ -54,7 +54,7 @@ fun searchWithGoogleLens(uri: Uri, context: Context): LensLaunchResult {
 
                 FileProvider.getUriForFile(
                     context,
-                    "com.akslabs.circletosearch.fileprovider",
+                    "${BuildConfig.APPLICATION_ID}.fileprovider",
                     file
                 )
             } catch (e: Exception) {

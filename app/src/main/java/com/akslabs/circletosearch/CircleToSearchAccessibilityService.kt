@@ -55,6 +55,7 @@ import android.view.ViewOutlineProvider
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import com.akslabs.circletosearch.BuildConfig
 import com.akslabs.circletosearch.data.ActionType
 import com.akslabs.circletosearch.data.BitmapRepository
 import com.akslabs.circletosearch.data.GestureType
@@ -1077,7 +1078,7 @@ class CircleToSearchAccessibilityService : AccessibilityService() {
                 val fileName = "share_pin_${java.util.UUID.randomUUID()}.png"
                 val path = ImageUtils.saveBitmap(this@CircleToSearchAccessibilityService, bitmap, fileName)
                 val file = java.io.File(path)
-                val uri = androidx.core.content.FileProvider.getUriForFile(this@CircleToSearchAccessibilityService, "com.akslabs.circletosearch.fileprovider", file)
+                val uri = androidx.core.content.FileProvider.getUriForFile(this@CircleToSearchAccessibilityService, "${BuildConfig.APPLICATION_ID}.fileprovider", file)
                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                     type = "image/png"
                     putExtra(Intent.EXTRA_STREAM, uri)

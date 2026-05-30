@@ -152,6 +152,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.webkit.WebSettingsCompat
+import com.akslabs.circletosearch.BuildConfig
 import com.akslabs.circletosearch.data.SearchEngine
 import com.akslabs.circletosearch.ui.components.FriendlyMessageBubble
 import com.akslabs.circletosearch.ui.components.searchWithGoogleLens
@@ -1735,7 +1736,7 @@ fun CircleToSearchScreen(
                                                     val fileName = "selection_${java.util.UUID.randomUUID()}.png"
                                                     val path = ImageUtils.saveBitmap(context, selectedBitmap!!, fileName)
                                                     val file = java.io.File(path)
-                                                    val uri = androidx.core.content.FileProvider.getUriForFile(context, "com.akslabs.circletosearch.fileprovider", file)
+                                                    val uri = androidx.core.content.FileProvider.getUriForFile(context, "${BuildConfig.APPLICATION_ID}.fileprovider", file)
                                                     val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply { 
                                                         type = "image/png"
                                                         putExtra(android.content.Intent.EXTRA_STREAM, uri)
