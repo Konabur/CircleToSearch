@@ -38,5 +38,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: CircleToSearch-release
-          path: app/build/outputs/apk/release/*.apk
+          name: CircleToSearch-debug
+          path: app/build/outputs/apk/debug/*.apk
